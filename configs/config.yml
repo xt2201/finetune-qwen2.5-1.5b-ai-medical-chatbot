@@ -1,0 +1,114 @@
+# Project Configuration
+project:
+  name: "LLM Medical Fine-tuning"
+  version: "1.1.0"
+  author: "Nguyen Xuan Thanh"
+
+# Model Configuration
+model:
+  name: "Qwen/Qwen2.5-1.5B-Instruct"
+  quantization:
+    enabled: true
+    method: "4bit"
+  max_length: 512
+  max_new_tokens: 256
+
+# Dataset Configuration
+dataset:
+  name: "ruslanmv/ai-medical-chatbot"
+  max_samples: 3000  # INCREASED: More data to reduce overfitting
+  train_ratio: 0.9
+  val_ratio: 0.1
+  shuffle: true
+  seed: 42
+  instruction_template: |
+    <|im_start|>system
+    You are a helpful medical assistant.<|im_end|>
+    <|im_start|>user
+    {question}<|im_end|>
+    <|im_start|>assistant
+    {answer}<|im_end|>
+
+# LoRA Configuration (Default) - OPTIMIZED based on experiments
+lora:
+  r: 16  # Best balance between capacity and regularization
+  lora_alpha: 32
+  lora_dropout: 0.15  # INCREASED: Better regularization to prevent overfitting
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+# Training Configuration - OPTIMIZED
+training:
+  output_dir: "./outputs"
+  num_train_epochs: 10  # REDUCED: Early stopping will handle this, 30 was excessive
+  per_device_train_batch_size: 2  # INCREASED: Better gradient estimation
+  per_device_eval_batch_size: 2
+  gradient_accumulation_steps: 8  # ADJUSTED: Effective batch = 2*8 = 16 (same)
+  learning_rate: 0.0001  # INCREASED: 1e-4 for faster initial learning
+  weight_decay: 0.05  # REDUCED: 0.1 was too aggressive with small data
+  warmup_ratio: 0.1  # CHANGED: Use ratio instead of fixed steps for scalability
+  warmup_steps: 0  # Disabled, using warmup_ratio instead
+  lr_scheduler_type: "cosine_with_restarts"  # CHANGED: Better for finding optima
+  lr_scheduler_kwargs:
+    num_cycles: 2  # Two restarts for better exploration
+  neftune_noise_alpha: 5
+  logging_steps: 10
+  save_strategy: "steps"
+  save_steps: 50  # INCREASED: Less frequent saves
+  save_total_limit: 3
+  evaluation_strategy: "steps"
+  eval_steps: 50  # INCREASED: Less frequent eval for faster training
+  fp16: false
+  bf16: true
+  optim: "paged_adamw_8bit"
+  resume_from_checkpoint: false
+  max_grad_norm: 0.5  # ADDED: Gradient clipping for stability
+  
+  # Early Stopping - ADJUSTED
+  early_stopping:
+    enabled: true
+    patience: 5  # INCREASED: More patience with new scheduler
+    threshold: 0.0005  # REDUCED: More sensitive to improvements
+
+# Experiments Configuration - NEW EXPERIMENTS
+experiments:
+  # Best from previous runs
+  - name: "lora_r16_alpha32_v2"
+    lora:
+      r: 16
+      lora_alpha: 32
+      lora_dropout: 0.15
+  
+  # Test higher alpha ratio (alpha = 4*r instead of 2*r)
+  - name: "lora_r16_alpha64"
+    lora:
+      r: 16
+      lora_alpha: 64  # Higher scaling factor
+      lora_dropout: 0.15
+  
+  # Test with more regularization
+  - name: "lora_r32_alpha64_reg"
+    lora:
+      r: 32
+      lora_alpha: 64
+      lora_dropout: 0.2  # More dropout
+
+# Evaluation Configuration
+evaluation:
+  test_questions:
+    - "What are the symptoms of diabetes?"
+    - "How to treat a common cold?"
+    - "What causes high blood pressure?"
+    - "What are the side effects of aspirin?"
+    - "How to prevent heart disease?"
+    - "What should I do if I have chest pain?"
+    - "How can I lower my cholesterol naturally?"
+    - "What are the early signs of cancer?"

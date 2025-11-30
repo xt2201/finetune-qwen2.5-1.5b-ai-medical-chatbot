@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+wandb/
+
+# Cache
+hf_cache/
+.cache/
+__pycache__/
+
+# Model outputs (keep structure but ignore large files)
+outputs/*/checkpoint-*/
+outputs/*/*/checkpoint-*/
+outputs/*/final_checkpoint/pytorch_model.bin
+outputs/*/final_checkpoint/model.safetensors
+outputs/*/*/final_checkpoint/pytorch_model.bin
+outputs/*/*/final_checkpoint/model.safetensors
+*.bin
+*.safetensors
+
+# Keep trainer_state.json and README for results
+!outputs/*/trainer_state.json
+!outputs/*/*/trainer_state.json
+!outputs/*/README.md
+!outputs/*/*/README.md
+!outputs/*/loss_curve.png
+!outputs/*/*/loss_curve.png
+
+# OS
+.DS_Store
+Thumbs.db

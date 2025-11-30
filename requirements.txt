@@ -1,0 +1,17 @@
+transformers
+torch
+accelerate
+bitsandbytes
+peft
+trl
+datasets
+wandb
+python-dotenv
+scipy
+einops
+sentencepiece
+protobuf
+scikit-learn
+matplotlib
+rich
+tabulate
