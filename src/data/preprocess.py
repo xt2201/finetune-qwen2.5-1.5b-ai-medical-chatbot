@@ -47,6 +47,27 @@ def preprocess_and_split(dataset_name="ruslanmv/ai-medical-chatbot", max_samples
     logger.info(f"Train size: {len(split_dataset['train'])}")
     logger.info(f"Test/Val size: {len(split_dataset['test'])}")
     
+    # Calculate Statistics
+    logger.info("Calculating dataset statistics...")
+    lengths = []
+    for sample in split_dataset['train']:
+        # Estimate length based on characters or words
+        # Here we use character length of the conversation
+        content = ""
+        for msg in sample['messages']:
+            content += msg['content']
+        lengths.append(len(content))
+        
+    if lengths:
+        import numpy as np
+        avg_len = np.mean(lengths)
+        min_len = np.min(lengths)
+        max_len = np.max(lengths)
+        median_len = np.median(lengths)
+        
+        logger.info(f"Average Length (chars): {avg_len:.2f}")
+        logger.info(f"Length Distribution - Min: {min_len}, Max: {max_len}, Median: {median_len}")
+    
     return split_dataset
 
 if __name__ == "__main__":

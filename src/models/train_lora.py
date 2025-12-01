@@ -52,6 +52,19 @@ def train(experiment_name=None, lora_override=None, resume_from_checkpoint=None)
     
     logger.info("Configuration loaded.")
     
+    # Apply Environment Overrides (Dataset & Training)
+    if os.environ.get("MAX_SAMPLES"):
+        logger.info(f"Overriding max_samples: {os.environ.get('MAX_SAMPLES')}")
+        cfg["dataset"]["max_samples"] = int(os.environ.get("MAX_SAMPLES"))
+        
+    if os.environ.get("LEARNING_RATE"):
+        logger.info(f"Overriding learning_rate: {os.environ.get('LEARNING_RATE')}")
+        cfg["training"]["learning_rate"] = float(os.environ.get("LEARNING_RATE"))
+        
+    if os.environ.get("NUM_EPOCHS"):
+        logger.info(f"Overriding num_train_epochs: {os.environ.get('NUM_EPOCHS')}")
+        cfg["training"]["num_train_epochs"] = int(os.environ.get("NUM_EPOCHS"))
+    
     # Initialize W&B
     if cfg.get("wandb", {}).get("enabled", True):
         wandb_project = cfg.get("project", {}).get("name", "llm-medical-finetuning")
@@ -140,8 +153,7 @@ def train(experiment_name=None, lora_override=None, resume_from_checkpoint=None)
         fp16=cfg["training"]["fp16"],
         bf16=cfg["training"]["bf16"] and torch.cuda.is_bf16_supported(),
         optim=cfg["training"]["optim"],
-        report_to="wandb",
-        dataset_text_field="text", 
+        # dataset_text_field="text", # REMOVED: Allow SFTTrainer to use 'messages' column automatically
         max_length=cfg["model"]["max_length"],
         packing=False,
         load_best_model_at_end=True if cfg["training"].get("early_stopping", {}).get("enabled", False) else False,
@@ -193,4 +205,11 @@ if __name__ == "__main__":
             "lora_alpha": int(os.environ.get("LORA_ALPHA", 32))
         }
         
+    # Apply other overrides directly to config in train function
+    # We'll pass them as a separate dict or modify train signature
+    # For simplicity, let's modify the train function to accept general overrides
+    
+    # But first, let's just patch the config loading inside train() by using env vars
+    # This is cleaner than changing signature too much
+    
     train(experiment_name=exp_name, lora_override=lora_override)

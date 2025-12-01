@@ -54,14 +54,55 @@ cells.append(new_code_cell("""with open("../configs/config.yml", "r") as f:
     config = yaml.safe_load(f)
     print(yaml.dump(config, default_flow_style=False))"""))
 
+# Theory Questions (Task 2)
+cells.append(new_markdown_cell("""## Task 2: Theory Questions
+
+### 1. Comparison of Fine-tuning Methods
+| Method | Description | Pros | Cons | When to use |
+| :--- | :--- | :--- | :--- | :--- |
+| **Full Fine-tuning** | Updates all model parameters. | Best potential performance. | High VRAM & storage cost. Slow. | Small models (<1B) or when you have massive compute resources. |
+| **LoRA** | Freezes pre-trained weights, injects trainable rank decomposition matrices. | Low VRAM, fast training, small checkpoint size. | Slightly lower performance ceiling than full FT. | Most standard fine-tuning tasks on consumer GPUs. |
+| **QLoRA** | LoRA + 4-bit quantization of base model (NF4). | Lowest VRAM usage. Can run 70B models on single GPU. | Slower training due to dequantization overhead. | Limited VRAM scenarios (e.g., Colab free tier). |
+
+### 2. Important Hyperparameters
+- **Learning Rate**: Controls step size during optimization. Too high = unstable; too low = slow convergence. For LoRA, usually higher (2e-4) than full FT.
+- **Batch Size**: Number of samples processed before updating weights. Affects gradient stability and VRAM usage.
+- **LoRA Rank (r)**: Dimension of the low-rank matrices. Higher r = more trainable params = more capacity, but higher VRAM.
+- **LoRA Alpha**: Scaling factor for LoRA weights. Usually set to 2*r. Controls the strength of the adapter.
+- **Epochs**: Number of full passes through the dataset. Too many = overfitting; too few = underfitting.
+- **Warmup Steps**: Gradually increases LR from 0 to target value to stabilize early training.
+
+### 3. Preventing Overfitting
+1.  **Early Stopping**: Stop training when validation loss stops improving.
+2.  **Dropout**: Randomly zero out neurons (LoRA dropout) to prevent reliance on specific features.
+3.  **Regularization (Weight Decay)**: Penalize large weights to keep the model simple.
+"""))
+
 # Training
 cells.append(new_markdown_cell("""## 3. Training & Comparison
 We run `scripts/train_comparison.py` to train multiple LoRA configurations and compare them.
 **Note**: This step may take significant time. If models are already trained, it will skip training and generate reports."""))
 cells.append(new_code_cell("!python ../scripts/train_comparison.py"))
 
-# Analysis
-cells.append(new_markdown_cell("## 4. Analysis & Results\nHere is the summary of our experiments."))
+# Analysis (Task 4)
+cells.append(new_markdown_cell("""## Task 4: Analysis & Conclusion
+
+### 1. Is the model overfitting?
+**Answer**: Based on the loss curves (see `outputs/experiment_report.md` or WandB), if the validation loss starts increasing while training loss decreases, the model is overfitting. In our experiments, we used **Early Stopping** and **Dropout (0.2)** to mitigate this. The reduced epoch count (3) also helps.
+
+### 2. Improvements for Performance
+- **Data Quality**: Clean and filter the medical dataset further to remove noise.
+- **Hyperparameter Tuning**: Run a sweep for Learning Rate and LoRA Rank.
+- **Few-shot Prompting**: Include examples in the prompt context during inference.
+- **RAG (Retrieval Augmented Generation)**: Connect the model to a medical knowledge base for up-to-date info.
+
+### 3. Production Considerations
+- **Latency**: LoRA adapters add minimal latency, but 4-bit quantization might slow down inference slightly.
+- **Safety**: Medical advice requires strict guardrails. The model should refuse to answer dangerous questions or include a disclaimer.
+- **Monitoring**: Track user feedback and drift in query distribution.
+"""))
+
+cells.append(new_markdown_cell("## 4. Results Report\nHere is the summary of our experiments."))
 cells.append(new_code_cell("""report_path = "../outputs/experiment_report.md"
 if os.path.exists(report_path):
     with open(report_path, "r") as f:
@@ -71,7 +112,7 @@ else:
 
 cells.append(new_markdown_cell("### Loss Curves\nVisualizing the training stability."))
 cells.append(new_code_cell("""# Display loss curves for the experiments
-experiments = ["lora_r8_alpha16", "lora_r16_alpha32", "lora_r32_alpha64"]
+experiments = ["lora_r16_alpha32_v3", "lora_r16_alpha32_lowlr", "lora_r32_alpha64_v2"]
 for exp in experiments:
     img_path = f"../outputs/{exp}/loss_curve.png"
     if os.path.exists(img_path):
@@ -81,7 +122,7 @@ for exp in experiments:
 # Inference
 # Comparative Inference
 cells.append(new_markdown_cell("""## 5. Comparative Inference
-We compare the generation quality of different LoRA configurations (e.g., r=8, r=16, r=32) on the same set of questions."""))
+We compare the generation quality of different LoRA configurations on the same set of questions."""))
 
 cells.append(new_code_cell("""# Load Base Model Once
 model_name = "Qwen/Qwen2.5-1.5B-Instruct"
@@ -127,7 +168,7 @@ comparison_questions = [
 ]
 
 # Iterate and Compare
-experiments = ["lora_r8_alpha16", "lora_r16_alpha32", "lora_r32_alpha64"]
+experiments = ["lora_r16_alpha32_v3", "lora_r16_alpha32_lowlr", "lora_r32_alpha64_v2"]
 results = {}
 
 # Initialize PeftModel with the first adapter to get the class wrapper
@@ -219,7 +260,7 @@ if adapter_path:
     
     # Load the best adapter
     # Note: 'model' is already a PeftModel from previous cell. We can just load this new one.
-    if 'model' in locals():
+    if 'model' in locals() and model is not None:
         print(f"Loading best adapter {best_exp_name} into existing model...")
         try:
             model.load_adapter(adapter_path, adapter_name="best_model")
@@ -300,7 +341,5 @@ notebook = {
     "nbformat_minor": 5
 }
 
-with open("notebooks/aimesoft_llm_test.ipynb", "w") as f:
+with open("notebooks/notebook.ipynb", "w") as f:
     json.dump(notebook, f, indent=1)
-
-print("Notebook updated successfully.")

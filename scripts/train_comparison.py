@@ -187,6 +187,16 @@ def run_experiments():
         env["LORA_R"] = str(lora_config["r"])
         env["LORA_ALPHA"] = str(lora_config["lora_alpha"])
         
+        # Add overrides for dataset and training
+        if "dataset" in exp and "max_samples" in exp["dataset"]:
+            env["MAX_SAMPLES"] = str(exp["dataset"]["max_samples"])
+            
+        if "training" in exp:
+            if "learning_rate" in exp["training"]:
+                env["LEARNING_RATE"] = str(exp["training"]["learning_rate"])
+            if "num_train_epochs" in exp["training"]:
+                env["NUM_EPOCHS"] = str(exp["training"]["num_train_epochs"])
+        
         cmd = [sys.executable, "src/models/train_lora.py"]
         
         try:
