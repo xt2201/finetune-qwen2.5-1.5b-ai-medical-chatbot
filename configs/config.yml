@@ -1,7 +1,7 @@
 # Project Configuration
 project:
   name: "LLM Medical Fine-tuning"
-  version: "1.2.0"  # Updated after analysis
+  version: "1.2.0"
   author: "Nguyen Xuan Thanh"
 
 # Model Configuration
@@ -16,7 +16,7 @@ model:
 # Dataset Configuration
 dataset:
   name: "ruslanmv/ai-medical-chatbot"
-  max_samples: 5000  # CHANGED: Increased to 5000 to improve LoRA performance
+  max_samples: 5000
   train_ratio: 0.9
   val_ratio: 0.1
   shuffle: true
@@ -29,11 +29,11 @@ dataset:
     <|im_start|>assistant
     {answer}<|im_end|>
 
-# LoRA Configuration (Default) - OPTIMIZED v2 based on new experiments
+# LoRA Configuration (Default)
 lora:
   r: 16
   lora_alpha: 32
-  lora_dropout: 0.2  # INCREASED: Prevent overfitting observed after step 300
+  lora_dropout: 0.2
   target_modules:
     - "q_proj"
     - "k_proj"
@@ -45,38 +45,37 @@ lora:
   bias: "none"
   task_type: "CAUSAL_LM"
 
-# Training Configuration - OPTIMIZED v2 based on analysis
+# Training Configuration
 training:
   output_dir: "./outputs"
-  num_train_epochs: 3  # REDUCED: To match requirements (1-3 epochs)
-  per_device_train_batch_size: 4  # INCREASED: Better gradient estimation
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
   per_device_eval_batch_size: 4
-  gradient_accumulation_steps: 8  # Effective batch = 4*8 = 32
-  learning_rate: 0.0002  # INCREASED: 2e-4 to match requirement range (2e-4 to 5e-4)
-  weight_decay: 0.1  # INCREASED: Stronger regularization
+  gradient_accumulation_steps: 8
+  learning_rate: 0.0002
+  weight_decay: 0.1
   warmup_ratio: 0.1
   warmup_steps: 0
-  lr_scheduler_type: "cosine"  # CHANGED: Simple cosine, restarts not needed
+  lr_scheduler_type: "cosine"
   neftune_noise_alpha: 5
   logging_steps: 10
   save_strategy: "steps"
   save_steps: 50
   save_total_limit: 3
   evaluation_strategy: "steps"
-  eval_steps: 25  # MORE FREQUENT: Catch best model earlier
+  eval_steps: 25
   fp16: false
   bf16: true
   optim: "paged_adamw_8bit"
   resume_from_checkpoint: false
-  max_grad_norm: 1.0  # RELAXED: 0.5 was too aggressive
+  max_grad_norm: 1.0
   
   # Early Stopping - TIGHTENED
   early_stopping:
     enabled: true
-    patience: 4  # REDUCED: Stop earlier to prevent overfitting
-    threshold: 0.001  # INCREASED: Less sensitive, avoid premature stopping
+    patience: 4
+    threshold: 0.001
 
-# Experiments Configuration - v3 EXPERIMENTS
 # Experiments Configuration
 experiments:
   # Base experiment
